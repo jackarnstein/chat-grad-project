@@ -116,9 +116,7 @@
         self.createGroup = function(targetUser){
             console.log("create group button clicked");
 
-
-
-            $http.put("/api/groups/" + "othergroup", {
+            $http.put("/api/groups/" + "newwerrgroup", {
                 title:"hello"
             });
         }

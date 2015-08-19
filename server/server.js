@@ -208,26 +208,27 @@ module.exports = function(port, db, githubAuthoriser) {
         var groupID = req.params.id;
         console.log("looking for existing group called: " +groupID);
 
-        groups.find().toArray(function(err, docs) {
-            if (!err) {
-                console.log("group found");
+        groups.findOne({
+            _id: req.params.id
+        }, function(err, group) {
+            console.log(group);
+            if (group != null) {
+                // TODO: Wait for this operation to complete
                 groups.update(
-                    {id: groupID},
-                    {$set:{title:"updated"}}
-                );
-                console.log("conversation set to seen");
+                {_id: req.params.id},
+                {$set:{title:req.params.title}},
+                {multi:false}
+            );
+            res.sendStatus(200);
             } else {
-                console.log("group not found.. creating it!");
                 groups.insertOne({
-                    title: "Group created!!!"
+                    _id: req.params.id,
+                    title: req.params.title
                 });
                 res.sendStatus(201);
             }
         });
     });
-
-
-
 
 
 
@@ -240,9 +241,6 @@ module.exports = function(port, db, githubAuthoriser) {
             multi:true
         });
     });
-
-
-
 
     return app.listen(port);
 };
