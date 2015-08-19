@@ -1,13 +1,18 @@
 var express = require("express");
+var bodyParser = require("body-parser");
 var cookieParser = require("cookie-parser");
+var _ = require('underscore-contrib');
 
 module.exports = function(port, db, githubAuthoriser) {
     var app = express();
 
     app.use(express.static("public"));
+    app.use(bodyParser.json());
     app.use(cookieParser());
 
     var users = db.collection("users");
+    var conversations = db.collection("conversations");
+    var groups = db.collection("groups");
     var sessions = {};
 
     app.get("/oauth", function(req, res) {
@@ -85,6 +90,159 @@ module.exports = function(port, db, githubAuthoriser) {
             }
         });
     });
+
+    app.post("/api/conversations/:id", function(req, res) {
+        var sent = req.body.sent;
+        var body = req.body.body;
+        console.log(body);
+
+        conversations.insertOne({
+            seen: false,
+            from: req.session.user,
+            to: req.params.id,
+            sent: sent,
+            body: body
+        });
+
+        //
+        //conversations.insertOne({
+        //    seen: false,
+        //    to: req.session.user,
+        //    from: req.params.id,
+        //    sent: sent,
+        //    body: body
+        //});
+        res.status(201).send(req.id);
+    });
+
+    app.get("/api/conversations/:id", function(req, res) {
+        var userId = req.params.id;
+        console.log(userId);
+        conversations.find().toArray(function(err, docs) {
+            docs = docs.filter(function(conversation) {
+                if ((conversation.to === userId || conversation.from === userId) &&
+                (conversation.to === req.session.user || conversation.from === req.session.user))
+                {
+                    return conversation;
+                }
+            });
+            docs = docs.sort(function(a ,b){return a.sent - b.sent});
+            if (!err) {
+                res.json(docs.map(function(conversation) {
+                    return {
+                        sent: conversation.sent,
+                        body: conversation.body,
+                        from: conversation.from,
+                        to:   conversation.to,
+                        seen: conversation.seen
+                    };
+
+                }));
+            } else {
+                res.sendStatus(500);
+            }
+        });
+    });
+
+
+    app.get("/api/conversations/", function(req, res) {
+        var check = req.session.user;
+        console.log("USER:");
+        console.log(check);
+
+        //find all conversations which the user has partaken in
+        conversations.find().toArray(function(err, docs) {
+            if (!err) {
+            docs = docs.filter(function (conversation) {
+                if ((conversation.to === req.session.user && conversation.from !== req.session.user)) {
+                    return conversation;
+                }
+            });
+
+            //try to filter out the ones which arent new
+            docs = docs.filter(function (conversation) {
+                if (!conversation.seen){
+                    return conversation;
+                }
+            });
+            var messageMap = {};
+            for(var i = 0; i < docs.length; i++)
+            {
+                if(messageMap[docs[i].from] == null) {
+                    messageMap[docs[i].from] = docs[i];
+                }
+                else if(messageMap[docs[i].from].sent<docs[i].sent) {
+                    messageMap[docs[i].from] = docs[i];
+                }
+            }
+
+            res.json(_.values(messageMap).map(function(conversation) {
+                return {
+                    user: conversation.from,
+                    lastMessage: conversation.body,
+                    unseen: true
+                };
+            }));
+            } else {
+                res.sendStatus(500);
+            }
+        });
+    });
+
+    app.put("/api/conversations/:id", function(req, res) {
+        console.log("trying to set conversation to seen");
+        var user = req.session.user;
+        var sender = req.params.id;
+        conversations.update(
+            {to: user, from: sender, seen: false},
+            {$set:{seen:true}},
+            {multi:true}
+        );
+        console.log("conversation set to seen");
+
+    });
+
+    app.put("/api/groups/:id", function(req, res) {
+        console.log("Trying to make a new group");
+
+        var groupID = req.params.id;
+        console.log("looking for existing group called: " +groupID);
+
+        groups.find().toArray(function(err, docs) {
+            if (!err) {
+                console.log("group found");
+                groups.update(
+                    {id: groupID},
+                    {$set:{title:"updated"}}
+                );
+                console.log("conversation set to seen");
+            } else {
+                console.log("group not found.. creating it!");
+                groups.insertOne({
+                    title: "Group created!!!"
+                });
+                res.sendStatus(201);
+            }
+        });
+    });
+
+
+
+
+
+
+    app.delete("/api/conversations/:id", function(req,res) {
+        console.log("making delete request");
+        var targetUser = req.params.id;
+        conversations.remove({
+                from:req.session.user, to: targetUser
+            }, {
+            multi:true
+        });
+    });
+
+
+
 
     return app.listen(port);
 };

@@ -3,19 +3,107 @@
     <head>
         <meta charset="utf-8">
         <title>Chat</title>
+        <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css">
+
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+        <!-- Optional theme -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.1/angular.min.js"></script>
         <script src="js/main.js"></script>
     </head>
-    <body ng-controller="ChatController">
-        <a ng-show="!loggedIn" href="{{loginUri}}">Log in</a>
+    <body ng-controller="ChatController as main" id = "main">
+
+        <div ng-show="!loggedIn">
+            <a ng-show="!loggedIn" href="{{loginUri}}">
+                <img src="http://blog.scottlogic.com/mkirova/assets/2014-08-29-foyer-screen/welcome.png" alt="Smiley face" id="loginPic">
+            </a>
+        </div>
         <section ng-show="loggedIn">
-            <p>Logged in as {{user.name}}.</p>
-            <h2>List of registered users</h2>
-            <ul>
-                <li ng-repeat="user in users">
+            <div id = "banner" class="col-md-12 col">
+                <div id = "icon">
+                    <h1>Scott Logik Messenger</h1>
+                </div>
+                <h1>
+                    <img src="{{user.avatarUrl}}" alt="Smiley face" height="65" width="65" ng-click="main.getMessageLog(person)">
                     {{user.name}}
-                </li>
-            </ul>
+                </h1>
+
+            </div>
+
+            <div id="userList" class="col-md-4 col">
+                <table style="width:100%" class="table table-hover">
+                    <tr>
+                        <th>Users</th>
+                    </tr>
+                    <tr ng-repeat="person in users">
+                        <td>
+                            <div id = {{person.id}} ng-click="main.getMessageLog(person)">
+                                <img src = "{{person.avatarUrl}}" alt="Smiley face" height="35" width="35" ng-click="main.getMessageLog(person)">
+                                {{person.name}}
+                                <span ng-if="main.checkUnreceived(person)" class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div id = "selected" class="col-md-6 col">
+                <div ng-if="target">
+                    <div id = chatboxBanner>
+                            <img src="{{target.avatarUrl}}" alt="Smiley face" height="35" width="35" ng-click="main.getMessageLog(target)">
+                            {{target.name}}
+                            <span ng-click="main.deleteConversation(target)" class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                        <span ng-click="main.createGroup(target)" class="glyphicon glyphicon-star" aria-hidden="true"></span>
+
+                    </div>
+                    <div id = "chatbox">
+
+                        <table style="width:100%" class="table table-hover" id = chattable>
+                            <tr>
+                                <th>Time</th>
+                                <th>Sender</th>
+                                <th>Content</th>
+                            </tr>
+                            <tr ng-repeat="message in conversations">
+                                <td>
+                                    <time>
+                                        {{message.sent | date: "MM/dd/yyyy 'at' h:mma" }}
+                                    </time>
+                                </td>
+                                <td>{{message.from}}</td>
+                                <td id="chatbody">{{message.body}}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="inputbox">
+                        <form
+                                name = "main.createForm"
+                                class = "create-message"
+                                role = "form"
+                                ng-submit = "main.createMessage(target, main.newMessage)"
+                                novalidate>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" ng-model = "main.newMessage.body" placeholder="Enter text...">
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-default" type="submit">Post</button>
+                                    </span>
+                                </div><!-- /input-group -->
+                        </form>
+                    </div>
+                </div>
+                <div ng-if = "!target">
+                    <h2>Welcome...</h2>
+                </div>
+            </div>
         </section>
+
+        <script src="/app.js"></script>
+        <script src="view1/view1.js"></script>
     </body>
 </html>

@@ -1,0 +1,67 @@
+#list {
+    width:50%
+}
+
+
+button{
+    float:right;
+}
+
+#chatbox{
+    height: 650px;
+    overflow-y: auto;
+    word-wrap: break-word;
+
+}
+
+#selected{
+    padding-top: 15px;
+}
+
+#banner{
+    background-color: #434343;
+    color: lightskyblue;
+}
+
+#main{
+    background-color: #ddd;
+}
+
+#chatbox, #chatboxBanner{
+    background-color: white;
+}
+
+#chatboxBanner{
+    margin-bottom: 0;
+    font-size: large;
+}
+
+#icon{
+    text-align:right;
+}
+
+.table tbody tr:hover td, .table tbody tr:hover th {
+    background-color:lightskyblue;
+    border-color: #606365;
+    border-top: #606365;
+}
+
+/*The chat body element has inline-block and break-all to break up the characters
+allowing for long words to be pushed onto multiple lines without an annoying x scroll
+bar appearing.. well worth remembering this approach!*/
+#chatbody{
+    width:400px;
+    overflow-y: auto;
+    display: inline-block;
+    word-break: break-word;
+}
+
+#trashCon {
+    align:right;
+}
+
+#loginPic{
+    width:auto;
+    max-width:100%;
+    height:auto;
+}
