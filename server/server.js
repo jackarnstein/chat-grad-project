@@ -21,12 +21,12 @@ module.exports = function(port, db, githubAuthoriser) {
     });
 
     io.on('connection', function(socket){
-        console.log('a user connected');
+        console.log('Server knows a user connected');
         socket.on('disconnect', function(){
-            console.log('user disconnected');
+            console.log('Server knows user disconnected');
             });
         socket.on('postMessage', function(msg){
-            console.log('message socket stuff done');
+            console.log('Server received message');
             app.post("/api/conversations/:id", function(req, res) {
                 var sent = req.body.sent;
                 var body = req.body.body;

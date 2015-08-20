@@ -7,13 +7,20 @@
         var socket = io();
 
         socket.on('connect', function () {
-                console.log("Chathost, I have connected");
+                console.log("User knows connected to server");
         });
 
         socket.on('update', function(){
             console.log("Chathost, time to update");
+            self.getMessageLog($scope.target);
             self.updateMessageLogs()
         });
+
+        socket.on('receive', function(){
+            console.log("Message received");
+            self.updateMessageLogs();
+        });
+
             $scope.loggedIn = false;
 
             $http.get("/api/user").then(function(userResult) {
@@ -79,7 +86,6 @@
                 body: msg.body
             }));
             self.resetMessage();
-            //self.getMessageLog(user);
             self.updateMessageLogs();
             console.log("message to " + user.id + "has been sent");
         };
