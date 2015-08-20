@@ -1,11 +1,11 @@
 var express = require("express");
 var bodyParser = require("body-parser");
 var cookieParser = require("cookie-parser");
-var _ = require('underscore-contrib');
+var _ = require("underscore-contrib");
 
 module.exports = function(port, db, githubAuthoriser) {
-    var app = require('express')();
-    var http = require('http').Server(app);
+    var app = require("express")();
+    var http = require("http").Server(app);
     var io = require('socket.io')(http);
     app.use(express.static("public"));
     app.use(bodyParser.json());
