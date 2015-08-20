@@ -4,10 +4,19 @@
     app.controller("ChatController", function($scope, $http) {
         var self = this;
         var unseen = {};
+        var socket = io();
 
-        $scope.loggedIn = false;
+        socket.on('connect', function () {
+                console.log("Chathost, I have connected");
+        });
 
-        $http.get("/api/user").then(function(userResult) {
+        socket.on('update', function(){
+            console.log("Chathost, time to update");
+            self.updateMessageLogs()
+        });
+            $scope.loggedIn = false;
+
+            $http.get("/api/user").then(function(userResult) {
             $scope.loggedIn = true;
             $scope.user = userResult.data;
             $http.get("/api/users").then(function(result) {
@@ -65,15 +74,13 @@
         self.createMessage = function(user, msg) {
             console.log("message to " + user.id + "being sent");
             var time = new Date().getTime();
-            $http.post("/api/conversations/" + user.id, {
+            socket.emit("postMessage", $http.post("/api/conversations/" + user.id, {
                 sent: time,
                 body: msg.body
-            }).then(function(response) {
-                self.resetMessage();
-                    self.getMessageLog(user);
-                    self.updateMessageLogs();
-                }
-            );
+            }));
+            self.resetMessage();
+            //self.getMessageLog(user);
+            self.updateMessageLogs();
             console.log("message to " + user.id + "has been sent");
         };
 

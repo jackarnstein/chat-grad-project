@@ -4,8 +4,9 @@ var cookieParser = require("cookie-parser");
 var _ = require('underscore-contrib');
 
 module.exports = function(port, db, githubAuthoriser) {
-    var app = express();
-
+    var app = require('express')();
+    var http = require('http').Server(app);
+    var io = require('socket.io')(http);
     app.use(express.static("public"));
     app.use(bodyParser.json());
     app.use(cookieParser());
@@ -14,6 +15,62 @@ module.exports = function(port, db, githubAuthoriser) {
     var conversations = db.collection("conversations");
     var groups = db.collection("groups");
     var sessions = {};
+
+    http.listen(3000, function(){
+        console.log('listening on *:3000');
+    });
+
+    io.on('connection', function(socket){
+        console.log('a user connected');
+        socket.on('disconnect', function(){
+            console.log('user disconnected');
+            });
+        socket.on('postMessage', function(msg){
+            console.log('message socket stuff done');
+            app.post("/api/conversations/:id", function(req, res) {
+                var sent = req.body.sent;
+                var body = req.body.body;
+                console.log(body);
+                conversations.insertOne({
+                    seen: false,
+                    from: req.session.user,
+                    to: req.params.id,
+                    sent: sent,
+                    body: body
+                });
+                res.status(201).send(req.id);
+            });
+
+            socket.emit('update', app.get("/api/conversations/:id", function(req, res) {
+                var userId = req.params.id;
+                console.log(userId);
+                conversations.find().toArray(function(err, docs) {
+                    docs = docs.filter(function(conversation) {
+                        if ((conversation.to === userId || conversation.from === userId) &&
+                            (conversation.to === req.session.user || conversation.from === req.session.user))
+                        {
+                            return conversation;
+                        }
+                    });
+                    docs = docs.sort(function(a ,b){return a.sent - b.sent});
+                    if (!err) {
+                        res.json(docs.map(function(conversation) {
+                            return {
+                                sent: conversation.sent,
+                                body: conversation.body,
+                                from: conversation.from,
+                                to:   conversation.to,
+                                seen: conversation.seen
+                            };
+
+                        }));
+                    } else {
+                        res.sendStatus(500);
+                    }
+                });
+            }));
+        });
+    });
 
     app.get("/oauth", function(req, res) {
         githubAuthoriser.authorise(req, function(githubUser, token) {
