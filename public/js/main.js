@@ -42,6 +42,7 @@
             });
         };
 
+<<<<<<< Updated upstream
 
 
 
@@ -49,6 +50,8 @@
 
 
 
+=======
+>>>>>>> Stashed changes
         socket.on("update", function() {
             console.log ("Chathost, time to update");
             self.getMessageLog($scope.target);
