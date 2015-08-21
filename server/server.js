@@ -26,49 +26,16 @@ module.exports = function(port, db, githubAuthoriser) {
             console.log('Server knows user disconnected');
             });
         socket.on('postMessage', function(msg){
-            console.log('Server received message');
-            app.post("/api/conversations/:id", function(req, res) {
-                var sent = req.body.sent;
-                var body = req.body.body;
-                console.log(body);
-                conversations.insertOne({
-                    seen: false,
-                    from: req.session.user,
-                    to: req.params.id,
-                    sent: sent,
-                    body: body
-                });
-                res.status(201).send(req.id);
+            console.log('Server received message: ' +  msg.body + " for: " + msg.to + " from: " + msg.from);
+            conversations.insertOne({
+                seen: false,
+                from: msg.from,
+                to: msg.to,
+                sent: msg.sent,
+                body: msg.body
             });
 
-            socket.emit('update', app.get("/api/conversations/:id", function(req, res) {
-                var userId = req.params.id;
-                console.log(userId);
-                conversations.find().toArray(function(err, docs) {
-                    docs = docs.filter(function(conversation) {
-                        if ((conversation.to === userId || conversation.from === userId) &&
-                            (conversation.to === req.session.user || conversation.from === req.session.user))
-                        {
-                            return conversation;
-                        }
-                    });
-                    docs = docs.sort(function(a ,b){return a.sent - b.sent});
-                    if (!err) {
-                        res.json(docs.map(function(conversation) {
-                            return {
-                                sent: conversation.sent,
-                                body: conversation.body,
-                                from: conversation.from,
-                                to:   conversation.to,
-                                seen: conversation.seen
-                            };
-
-                        }));
-                    } else {
-                        res.sendStatus(500);
-                    }
-                });
-            }));
+            socket.emit('update', msg);
         });
     });
 
