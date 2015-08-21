@@ -6,7 +6,7 @@ var _ = require("underscore-contrib");
 module.exports = function(port, db, githubAuthoriser) {
     var app = require("express")();
     var http = require("http").Server(app);
-    var io = require('socket.io')(http);
+    var io = require("socket.io")(http);
     app.use(express.static("public"));
     app.use(bodyParser.json());
     app.use(cookieParser());
@@ -18,16 +18,16 @@ module.exports = function(port, db, githubAuthoriser) {
     var connectedUsers = {};
 
     http.listen(3000, function(){
-        console.log('listening on *:3000');
+        console.log("listening on *:3000");
     });
 
-    io.on('connection', function(socket){
+    io.on("connection", function(socket){
         var socketId;
 
-        console.log('Server knows a user connected');
+        console.log("Server knows a user connected");
 
-        socket.on('disconnect', function(){
-            console.log('Server knows user disconnected');
+        socket.on("disconnect", function(){
+            console.log("Server knows user disconnected");
             delete connectedUsers[socketId];
 
         });
@@ -38,8 +38,8 @@ module.exports = function(port, db, githubAuthoriser) {
             connectedUsers[socketId] = socket;
         });
 
-        socket.on('postMessage', function(msg){
-            console.log('Server received message: ' +  msg.body + " for: " + msg.to + " from: " + msg.from);
+        socket.on("postMessage", function(msg){
+            console.log("Server received message: " +  msg.body + " for: " + msg.to + " from: " + msg.from);
             conversations.insertOne({
                 seen: false,
                 from: msg.from,
@@ -50,12 +50,12 @@ module.exports = function(port, db, githubAuthoriser) {
             console.log("who is this: "+ msg.from);
             if(connectedUsers[msg.to]){
                 console.log("Telling: " + msg.to + " to update");
-                connectedUsers[msg.to].emit('update', msg);
+                connectedUsers[msg.to].emit("update", msg);
             } else {
                 console.log("Not Telling: " + msg.to + " to update.. tey are offline");
             }
 
-            socket.emit('update', msg);
+            socket.emit("update", msg);
         });
     });
 

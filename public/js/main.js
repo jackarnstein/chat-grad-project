@@ -27,19 +27,14 @@
             $scope.socket.on("connect", function () {
                 $scope.socket.emit("login", $scope.user._id);
                 console.log("User knows connected to server");
-
-
                 $scope.socket.on("update", function(msg) {
                     console.log ("Update function called in client socket");
                     self.getMessageLog($scope.target);
                     self.updateMessageLogs();
                     $rootScope.$apply(function() {
                         $scope.conversations.push(msg);
-                    })
+                    });
                 });
-
-
-
             });
         };
 
@@ -56,8 +51,6 @@
             console.log("sending message from client");
             $scope.socket.emit("postMessage", message);
             self.resetMessage();
-            //self.updateMessageLogs(); <--- dont do this, creating doesnt mean update
-            //not until the sever has confirmed it has received the message
         };
 
 
