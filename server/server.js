@@ -15,16 +15,29 @@ module.exports = function(port, db, githubAuthoriser) {
     var conversations = db.collection("conversations");
     var groups = db.collection("groups");
     var sessions = {};
+    var connectedUsers = {};
 
     http.listen(3000, function(){
         console.log('listening on *:3000');
     });
 
     io.on('connection', function(socket){
+        var socketId;
+
         console.log('Server knows a user connected');
+
         socket.on('disconnect', function(){
             console.log('Server knows user disconnected');
-            });
+            delete connectedUsers[socketId];
+
+        });
+
+        socket.on("login", function(person){
+            console.log("Server has stored user socket information")
+            socketId = person;
+            connectedUsers[socketId] = socket;
+        });
+
         socket.on('postMessage', function(msg){
             console.log('Server received message: ' +  msg.body + " for: " + msg.to + " from: " + msg.from);
             conversations.insertOne({
@@ -34,6 +47,13 @@ module.exports = function(port, db, githubAuthoriser) {
                 sent: msg.sent,
                 body: msg.body
             });
+            console.log("who is this: "+ msg.from);
+            if(connectedUsers[msg.to]){
+                console.log("Telling: " + msg.to + " to update");
+                connectedUsers[msg.to].emit('update', msg);
+            } else {
+                console.log("Not Telling: " + msg.to + " to update.. tey are offline");
+            }
 
             socket.emit('update', msg);
         });

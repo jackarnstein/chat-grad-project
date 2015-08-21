@@ -4,8 +4,7 @@
     app.controller("ChatController", function($scope, $http, $rootScope) {
         var self = this;
         var unseen = {};
-        var socket = io("http://" + window.location.host);
-
+        $scope.socket = null;
         $scope.loggedIn = false;
         $http.get("/api/user").then(function(userResult) {
             $scope.loggedIn = true;
@@ -13,6 +12,7 @@
             $http.get("/api/users").then(function(result) {
                 $scope.users = result.data;
             });
+            $scope.getSockets();
         }, function() {
             $http.get("/api/oauth/uri").then(function(result) {
                     $scope.loginUri = result.data.uri;
@@ -20,10 +20,28 @@
             );
         });
 
-        //Trace connection status to server
-        socket.on("connection", function () {
+        $scope.getSockets = function(){
+            $scope.socket = io();
+            console.log("setting up sockets");
+            //Trace connection status to server
+            $scope.socket.on("connect", function () {
+                $scope.socket.emit("login", $scope.user._id);
                 console.log("User knows connected to server");
-        });
+
+
+                $scope.socket.on("update", function(msg) {
+                    console.log ("Update function called in client socket");
+                    self.getMessageLog($scope.target);
+                    self.updateMessageLogs();
+                    $rootScope.$apply(function() {
+                        $scope.conversations.push(msg);
+                    })
+                });
+
+
+
+            });
+        };
 
         //Send message over socket
         self.createMessage = function(recipient, msg) {
@@ -35,33 +53,14 @@
                 to: recipient.id,
                 from: $scope.user._id
             };
-            console.log("sending message over socket");
-            socket.emit("postMessage", message);
+            console.log("sending message from client");
+            $scope.socket.emit("postMessage", message);
             self.resetMessage();
             //self.updateMessageLogs(); <--- dont do this, creating doesnt mean update
             //not until the sever has confirmed it has received the message
         };
 
-        //The message was received by the server so need to update
-        socket.on("update", function() {
-            console.log ("Chathost, time to update");
-            self.getMessageLog($scope.target);
-            self.updateMessageLogs();
-        });
 
-        socket.on("receive", function() {
-            console.log ("Message received");
-            self.updateMessageLogs();
-        });
-
-        socket.on("update", function(msg) {
-            console.log ("Chathost, time to update");
-            self.getMessageLog($scope.target);
-            self.updateMessageLogs();
-            $rootScope.$apply(function() {
-                $scope.conversations.push(msg);
-            })
-        });
 
         self.updateMessageLogs = function() {
             $http.get("/api/conversations/").then(function(result) {
